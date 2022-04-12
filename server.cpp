@@ -8,7 +8,7 @@
 #include <string>
 #include <cstring>
 #include <iostream>
-
+#include "User.h"
 
 int SockList[10] = { };
 
@@ -25,10 +25,11 @@ void Invalid(connection_t * conn);
 void ListUsers(connection_t * conn);
 void BroadCast(connection_t * conn, const char * ServerBuffer);
 void Message(connection_t * conn, const char * ServerBuffer);
+void Register(connection_t * conn, const char * ServerBuffer, User & U1);
 
 void * process(void * ptr)
 {     
-
+    User U1;
     int isLogged = 0;
     int CheckSend, CheckRead, len;
     const char * ServerMessage;
@@ -69,6 +70,9 @@ void * process(void * ptr)
             }
             else if(strcmp("List", ServerBuffer) == 0){
                 ListUsers(conn);
+            }
+            else if(strstr(ServerBuffer, "Register") != NULL){
+                Register(conn, ServerBuffer,U1);
             }
             else if(strstr(ServerBuffer, "Broadcast") != NULL){
                 BroadCast(conn, ServerBuffer);
@@ -152,7 +156,48 @@ int main(int argc, char ** argv)
 	
     return 0;
 }
+void Register(connection_t * conn, const char * ServerBuffer, User & U1){
+    std::string ID, Pass;
+    char * pch = strtok(const_cast<char*>(ServerBuffer), " ");
+    for(int i = 0; i < 2; i++){
+        pch = strtok (NULL, " ");
+        if(i == 0){
+            ID = pch;
+        }
+        if(i == 1){
+            Pass = pch;
+        }
+        //std::cout << ID << std::endl << Pass << std::endl;
+    }
 
+    std::cout << "User ID: "<< ID << std::endl << "Password: " << Pass << std::endl;
+    
+    int check = U1.Register(ID,Pass);
+    if(check == -1){
+        const char *FailedMessage = "Failed to register";
+        int CheckSend = send(conn->sock, FailedMessage, strlen(FailedMessage), 0);
+        std::cout << "Server >" << FailedMessage << std::endl; 
+        std::cout << "Sending Client " << CheckSend << " Bytes" << std::endl;
+    }
+    else if(check == 1){
+        const char *SuccessMessage = "Registration Complete";
+        int CheckSend = send(conn->sock, SuccessMessage, strlen(SuccessMessage), 0);
+        std::cout << "Server >" << SuccessMessage << std::endl; 
+        std::cout << "Sending Client " << CheckSend << " Bytes" << std::endl;
+    }
+    else if(check == 2){
+        std::cout << "Password is more than 16 characters" << std::endl;
+    }
+    else if(check == 3){
+        std::cout << "Username is more than 16 characters" << std::endl;
+    }
+    else if(check == 4){
+        std::cout << "Username already exist" << std::endl;
+    }
+    else{
+        std::cout << "What the fuck" << std::endl;
+    }
+}
 void Exit(connection_t * conn){
     std::cout << "User has exited server" << std::endl;
 	close(conn->sock);
@@ -161,7 +206,7 @@ void Exit(connection_t * conn){
 }
 void Help(connection_t * conn){
     std::cout << "An unknown user has requested commands" << std::endl;
-    const char * ServerBuffer = "List of commands\n Help\n List\n Broadcast \"Message\"\n Message UserID \"text\"\n Exit\n";
+    const char * ServerBuffer = "List of commands\n Help\n List\n Broadcast \"Message\"\n Message UserID \"text\"\n Register \"Username\" \"Password\"\n Exit\n";
     int CheckSend = send(conn->sock, ServerBuffer, strlen(ServerBuffer), 0);
     std::cout << "Server >" << ServerBuffer << std::endl; 
     std::cout << "Sending Client " << CheckSend << " Bytes" << std::endl;

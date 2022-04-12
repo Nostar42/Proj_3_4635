@@ -1,7 +1,7 @@
 CXX = g++
 CXXFLAGS = -std=c++11 -g -Wall -lpthread
 
-SOBJECTS =
+SOBJECTS = User.o
 COBJECTS =
 HEADERS := $(shell find . -path ./test -prune -o -name "*.hpp" -print)
 
@@ -19,3 +19,4 @@ clean:
 	rm -rf *.dSYM
 	$(RM) *.o *.gc* *.s *.exe myshell *.zip server client SloanServer SloanClient
 
+#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
